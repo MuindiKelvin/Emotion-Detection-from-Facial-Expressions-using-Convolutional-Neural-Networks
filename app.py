@@ -142,7 +142,7 @@ st.write("**Note: For best results, use clear, well-lit images with a single fac
 st.markdown(
     """
     <footer style='text-align: center; margin-top: 20px;'>
-        <p>© 2024 Poojitha. All rights reserved.</p>
+        <p>© 2025 Kelvin Muindi. All rights reserved.</p>
     </footer>
     """,
     unsafe_allow_html=True
