@@ -4,5 +4,7 @@ numpy
 tensorflow
 scikit-learn
 streamlit
-opencv-python
+streamlit
+opencv-python-headless
+
 
