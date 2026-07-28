@@ -48,8 +48,18 @@ def load_face_cascade():
             "⚠️ Failed to initialize OpenCV's face detector. This usually means "
             "the `cv2` install on the server is broken — most commonly caused by "
             "having both `opencv-python` and `opencv-python-headless` in "
-            "requirements.txt. Keep only `opencv-python-headless`, then use "
-            "'Reboot app' (not just redeploy) in Streamlit Cloud's Manage app menu."
+            "requirements.txt, OR by a local file/folder named `cv2` in your repo "
+            "shadowing the real installed package."
+        )
+        # Diagnostic info: shows exactly what Python resolved "cv2" to and
+        # what it actually contains, which pinpoints a shadowing file/folder
+        # vs. a genuine broken install.
+        st.write("**Diagnostic info:**")
+        st.code(
+            f"cv2.__file__ = {getattr(cv2, '__file__', 'NO __file__ ATTRIBUTE (namespace package?)')}\n"
+            f"cv2.__version__ = {getattr(cv2, '__version__', 'MISSING')}\n"
+            f"'CascadeClassifier' in dir(cv2) = {'CascadeClassifier' in dir(cv2)}\n"
+            f"cv2 module contents (first 30): {sorted(dir(cv2))[:30]}"
         )
         st.exception(e)
         st.stop()
