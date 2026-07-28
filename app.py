@@ -4,6 +4,8 @@ import numpy as np
 from tensorflow.keras.models import load_model
 import time
 
+st.set_page_config(page_title="Emotion Detection App", layout="wide")
+
 # Load the trained model
 @st.cache_resource
 def load_model_cached():
@@ -19,7 +21,7 @@ def preprocess_image(image):
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
     faces = face_cascade.detectMultiScale(gray, 1.3, 5)
-    
+
     if len(faces) > 0:
         (x, y, w, h) = faces[0]
         face = gray[y:y+h, x:x+w]
@@ -30,13 +32,48 @@ def preprocess_image(image):
         return face, (x, y, w, h)
     return None, None
 
-# Animated background with many balloons
+BODY_TEXT_COLOR = "#1b1b1f"
+
+# Animated background with many balloons + explicit text-color fix
 st.markdown(
     """
     <style>
+    /* Pin a light color scheme so the app never inherits an invisible
+       dark-mode text color from the visitor's browser/OS. */
+    :root {
+        color-scheme: light;
+    }
+
     .stApp {
         background-color: whitesmoke;
         overflow: hidden;
+    }
+
+    /* Force every piece of text in the app to a readable dark color */
+    .stApp, .stApp p, .stApp span, .stApp div, .stApp h1, .stApp h2, .stApp h3,
+    .stApp label, .stApp footer, .stApp footer p {
+        color: #1b1b1f !important;
+    }
+
+    /* File uploader: force light background + dark text/icons, since the
+       dark widget skin otherwise makes this box (and its label above it)
+       unreadable, same issue as the number inputs in the other app. */
+    [data-testid="stFileUploader"] {
+        background-color: #ffffff !important;
+        border: 2px dashed #FFB6C1;
+        border-radius: 10px;
+        padding: 10px;
+    }
+    [data-testid="stFileUploader"] * {
+        color: #1b1b1f !important;
+    }
+    [data-testid="stFileUploaderDropzone"] {
+        background-color: #ffffff !important;
+    }
+    [data-testid="stBaseButton-secondary"] {
+        background-color: #FFB6C1 !important;
+        color: #1b1b1f !important;
+        border: none !important;
     }
 
     .balloon {
@@ -46,6 +83,7 @@ st.markdown(
         background-color: #FFB6C1;
         border-radius: 50%;
         animation: floatBalloons 10s infinite ease-in-out;
+        z-index: -1;
     }
 
     @keyframes floatBalloons {
@@ -93,7 +131,7 @@ uploaded_file = st.file_uploader("Choose an image... 📷", type=["jpg", "jpeg",
 if uploaded_file is not None:
     file_bytes = np.asarray(bytearray(uploaded_file.read()), dtype=np.uint8)
     image = cv2.imdecode(file_bytes, 1)
-    
+
     # Create a progress bar
     progress_bar = st.progress(0)
     status_text = st.empty()
@@ -105,7 +143,7 @@ if uploaded_file is not None:
         time.sleep(0.01)  # Adjust this value to control the speed of the progress bar
 
     face, rect = preprocess_image(image)
-    
+
     # Clear the progress bar and status text
     progress_bar.empty()
     status_text.empty()
@@ -114,16 +152,16 @@ if uploaded_file is not None:
         prediction = model.predict(face)[0]
         emotion = emotion_labels[np.argmax(prediction)]
         confidence = np.max(prediction)
-        
+
         # Draw rectangle and emotion on image
         (x, y, w, h) = rect
         processed_image = image.copy()
         cv2.rectangle(processed_image, (x, y), (x+w, y+h), (0, 255, 0), 2)
         cv2.putText(processed_image, emotion, (x, y-10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
-        
+
         # Display images and text on the same grid
         col1, col2, col3 = st.columns(3)
-        
+
         with col1:
             st.image(image, channels="BGR", caption="Uploaded Image 📸")
         with col2:
@@ -141,8 +179,8 @@ st.write("**Note: For best results, use clear, well-lit images with a single fac
 # Copyright information
 st.markdown(
     """
-    <footer style='text-align: center; margin-top: 20px;'>
-        <p>© 2025 Kelvin Muindi. All rights reserved.</p>
+    <footer style='text-align: center; margin-top: 20px; color: #1b1b1f;'>
+        <p style='color: #1b1b1f;'>© 2025 Kelvin Muindi. All rights reserved.</p>
     </footer>
     """,
     unsafe_allow_html=True
