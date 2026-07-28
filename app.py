@@ -248,7 +248,7 @@ st.write("**Note: For best results, use clear, well-lit images with a single fac
 st.markdown(
     """
     <footer style='text-align: center; margin-top: 20px; color: #1b1b1f;'>
-        <p style='color: #1b1b1f;'>© 2025 Kelvin Muindi. All rights reserved.</p>
+        <p style='color: #1b1b1f;'>© 2026 Kelvin Muindi. All rights reserved.</p>
     </footer>
     """,
     unsafe_allow_html=True
