@@ -28,20 +28,32 @@ CASCADE_URL = "https://raw.githubusercontent.com/opencv/opencv/master/data/haarc
 def load_face_cascade():
     cascade_path = CASCADE_FILENAME
 
-    # Prefer a copy already sitting next to app.py (recommended: commit it
-    # to the repo so no network call is needed at runtime).
-    if not os.path.exists(cascade_path):
-        try:
-            cascade_path = cv2.data.haarcascades + CASCADE_FILENAME
-        except AttributeError:
-            cascade_path = None
+    try:
+        # Prefer a copy already sitting next to app.py (recommended: commit
+        # it to the repo so no network call is needed at runtime).
+        if not os.path.exists(cascade_path):
+            try:
+                cascade_path = cv2.data.haarcascades + CASCADE_FILENAME
+            except AttributeError:
+                cascade_path = None
 
-    if not cascade_path or not os.path.exists(cascade_path):
-        # Last resort: download it once and cache locally.
-        urllib.request.urlretrieve(CASCADE_URL, CASCADE_FILENAME)
-        cascade_path = CASCADE_FILENAME
+        if not cascade_path or not os.path.exists(cascade_path):
+            # Last resort: download it once and cache locally.
+            urllib.request.urlretrieve(CASCADE_URL, CASCADE_FILENAME)
+            cascade_path = CASCADE_FILENAME
 
-    classifier = cv2.CascadeClassifier(cascade_path)
+        classifier = cv2.CascadeClassifier(cascade_path)
+    except Exception as e:
+        st.error(
+            "⚠️ Failed to initialize OpenCV's face detector. This usually means "
+            "the `cv2` install on the server is broken — most commonly caused by "
+            "having both `opencv-python` and `opencv-python-headless` in "
+            "requirements.txt. Keep only `opencv-python-headless`, then use "
+            "'Reboot app' (not just redeploy) in Streamlit Cloud's Manage app menu."
+        )
+        st.exception(e)
+        st.stop()
+
     if classifier.empty():
         st.error("⚠️ Could not load the face detection model (Haar cascade). Please check the app's logs.")
         st.stop()
