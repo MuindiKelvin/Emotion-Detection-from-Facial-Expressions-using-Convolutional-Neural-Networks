@@ -3,6 +3,8 @@ import cv2
 import numpy as np
 from tensorflow.keras.models import load_model
 import time
+import os
+import urllib.request
 
 st.set_page_config(page_title="Emotion Detection App", layout="wide")
 
@@ -13,13 +15,46 @@ def load_model_cached():
 
 model = load_model_cached()
 
+# --- Robust Haar cascade loading ---
+# cv2.data.haarcascades is unreliable on some Streamlit Cloud / headless
+# OpenCV builds (the 'data' submodule with bundled XML files can be
+# missing even though cv2 itself imports fine, causing an AttributeError).
+# Bundling the XML file locally, with an automatic one-time download as a
+# fallback, avoids depending on that path at all.
+CASCADE_FILENAME = "haarcascade_frontalface_default.xml"
+CASCADE_URL = "https://raw.githubusercontent.com/opencv/opencv/master/data/haarcascades/haarcascade_frontalface_default.xml"
+
+@st.cache_resource
+def load_face_cascade():
+    cascade_path = CASCADE_FILENAME
+
+    # Prefer a copy already sitting next to app.py (recommended: commit it
+    # to the repo so no network call is needed at runtime).
+    if not os.path.exists(cascade_path):
+        try:
+            cascade_path = cv2.data.haarcascades + CASCADE_FILENAME
+        except AttributeError:
+            cascade_path = None
+
+    if not cascade_path or not os.path.exists(cascade_path):
+        # Last resort: download it once and cache locally.
+        urllib.request.urlretrieve(CASCADE_URL, CASCADE_FILENAME)
+        cascade_path = CASCADE_FILENAME
+
+    classifier = cv2.CascadeClassifier(cascade_path)
+    if classifier.empty():
+        st.error("⚠️ Could not load the face detection model (Haar cascade). Please check the app's logs.")
+        st.stop()
+    return classifier
+
+face_cascade = load_face_cascade()
+
 # Define emotion labels with emojis
 emotion_labels = ['Angry 😡', 'Disgust 🤢', 'Fear 😨', 'Happy 😊', 'Neutral 😐', 'Sad 😢', 'Surprise 😲']
 
 # Function to preprocess image
 def preprocess_image(image):
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
     faces = face_cascade.detectMultiScale(gray, 1.3, 5)
 
     if len(faces) > 0:
@@ -69,6 +104,17 @@ st.markdown(
     }
     [data-testid="stFileUploaderDropzone"] {
         background-color: #ffffff !important;
+    }
+    /* The little "filename / size" chip that appears after a file is
+       uploaded renders as its own dark widget and wasn't caught by the
+       broader [data-testid="stFileUploader"] * rule above. */
+    [data-testid="stFileUploaderFile"],
+    [data-testid="stFileUploaderFile"] * {
+        background-color: #ffffff !important;
+        color: #1b1b1f !important;
+    }
+    [data-testid="stFileUploaderFileName"] {
+        color: #1b1b1f !important;
     }
     [data-testid="stBaseButton-secondary"] {
         background-color: #FFB6C1 !important;
